@@ -1,111 +1,76 @@
 #include <iostream>
-#include <string>
 using namespace std;
 
-class Product{
+class Account;
+
+void transferFunds(Account &from, Account &to, double amount);
+
+class Account {
+private:
+    int accountNumber;
+    double balance;
+
 public:
-    int productId;
-    string productName;
-    double price;
-    int stockQuantity;
+    Account(int accNum, double bal) : accountNumber(accNum), balance(bal) {}
 
-    Product(int id, string name, double price, int stock=0): productId(id), productName(name), price(price), stockQuantity(stock){}
-
-    virtual void applyDiscount(){}
-    virtual double calculateTotalPrice(int quantity){ return price*quantity;}
-    virtual void display(){
-        cout<<"\n\nProduct Id: "<<productId<<endl;
-        cout<<"Product Name: "<<productName<<endl;
-        cout<<"Price: "<<price<<endl;
-        if(stockQuantity!=0) cout<<"Stock Quantity: "<<stockQuantity<<endl;
-    }
-
-    friend ostream& operator<<(ostream& out, Product& p){
-        out<<"Product: "<<p.productName<<" | Price: "<<p.price;
-        return out;
-    }
-
-    Product operator+(Product& p) {
-        return Product(0, "Bulk Purchase", this->price + p.price);
-    }
-
-    virtual ~Product(){}
-
+    friend class Manager;
+    friend void transferFunds(Account &from, Account &to, double amount);
 };
 
-class Electronics: public Product{
+class Manager {
 public:
-    int warrantyPeriod;
-    string brand;
+    void deposit(Account &acc, double amount) {
+        if (amount > 0) {
+            acc.balance += amount;
+            cout << "Deposited $" << amount << " into account " << acc.accountNumber << endl;
+        } else {
+            cout << "Invalid deposit amount!" << endl;
+        }
+    }
 
-    Electronics(int id, string name, double price, int period, string brand, int stock=0): Product(id, name, price, stock), warrantyPeriod(period), brand(brand){}
+    void withdraw(Account &acc, double amount) {
+        if (amount <= acc.balance && amount > 0) {
+            acc.balance -= amount;
+            cout << "Withdrew $" << amount << " from account " << acc.accountNumber << endl;
+        } else {
+            cout << "Insufficient funds or invalid amount!" << endl;
+        }
+    }
 
-    void display(){
-        Product::display();
-        cout<<"Warranty Period: "<<warrantyPeriod<<endl;
-        cout<<"Brand: "<<brand<<endl;
+    void display(const Account &acc) {
+        cout << "Account Number: " << acc.accountNumber
+             << ", Balance: $" << acc.balance << endl;
     }
 };
 
-class Clothing: public Product{
-public:
-    char size;
-    string color;
-    string fabricMaterial;
-
-    Clothing(int id, string name, double price, char size, string color, string material, int stock=0): Product(id, name, price, stock), size(size), color(color), fabricMaterial(material){}
-
-    void applyDiscount(){
-        price*=0.9; //10% Discount
+void transferFunds(Account &from, Account &to, double amount) {
+    if (amount > 0 && from.balance >= amount) {
+        from.balance -= amount;
+        to.balance += amount;
+        cout << "Transferred $" << amount << " from Account " << from.accountNumber
+             << " to Account " << to.accountNumber << endl;
+    } else {
+        cout << "Transfer failed: Insufficient balance or invalid amount." << endl;
     }
-};
+}
 
-class FoodItem : public Product {
-    string expirationDate;
-    int calories;
+int main() {
+    Account acc1(101, 1000.0);
+    Account acc2(102, 500.0);
 
-public:
-    FoodItem(int id, string name, double p, string expiry, int cal, int stock=0): Product(id, name, p, stock), expirationDate(expiry), calories(cal) {}
+    Manager mgr;
 
-    double calculateTotalPrice(int quantity){
-        return (quantity > 10) ? (price * quantity * 0.85) : (price * quantity);  // 15% bulk discount
-    }
-    void display(){
-        Product::display();
-        cout << "Expiration Dates: " << expirationDate << "\nCalories: " << calories << "\n";
-    }
-};
+    cout << "Initial Account States:\n";
+    mgr.display(acc1);
+    mgr.display(acc2);
 
-class Book : public Product {
-    string author;
-    string genre;
+    mgr.deposit(acc1, 200.0);
+    mgr.withdraw(acc2, 100.0);
+    transferFunds(acc1, acc2, 300.0);
 
-public:
-    Book(int id, string name, double p, string author, string genre, int stock=0): Product(id, name, p, stock), author(author), genre(genre) {}
+    cout << "\nFinal Account States:\n";
+    mgr.display(acc1);
+    mgr.display(acc2);
 
-    void display(){
-        Product::display();
-        cout << "Author: " << author << "\nGenre: " << genre << "\n";
-    }
-};
-
-int main(){
-    Electronics e1(1, "Iphone", 1500, 4, "Apple");
-    Clothing c1(2, "Jacket", 26, 'M', "Green", "Cotton");
-    FoodItem f1(3, "Sandwich", 2, "2025-12-10", 95);
-    Book b1(4, "The Beginning After the end", 50, "TurtleME", "Peakfiction");
-
-    e1.display();
-    c1.display();
-    f1.display();
-    b1.display();
-
-    c1.applyDiscount();
-    cout << "\nNew Clothing Price: " << c1.calculateTotalPrice(1) << "\n";
-
-    cout << "\nBulk Purchase Total Price for 12 Sandwiches: " << f1.calculateTotalPrice(12) << "\n";
-
-    Product bulkPurchase = c1 + f1;
-    cout << "\nBulk Purchase: " << bulkPurchase << "\n";
     return 0;
 }
