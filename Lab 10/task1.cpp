@@ -7,7 +7,7 @@ int main(){
     ifstream inputFile("vehicles.txt");
 
     if(!inputFile.is_open()){
-        cerr<<"Errpr file couldnt be opened"<<endl;
+        cerr<<"Error file couldnt be opened"<<endl;
         return 1;
     }
 
